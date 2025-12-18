@@ -148,9 +148,10 @@ const Exam = () => {
     try {
       const results = calculateResults();
       
-      if (supabase && user) {
+      if (user) {
         // Save to database
         const { error } = await supabase.from('exam_attempts').insert({
+          user_id: user.id,
           student_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown',
           student_email: user.email || '',
           exam_name: 'Network+ Practice Exam',

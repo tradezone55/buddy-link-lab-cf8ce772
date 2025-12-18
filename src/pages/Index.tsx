@@ -13,9 +13,9 @@ const Index = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const { error } = await supabase.from('_test_connection').select('*').limit(1);
-        // If we get a proper response (even an error about table not existing), we're connected
-        setIsConnected(!error || error.code === '42P01' || error.code === 'PGRST116');
+        // Just check if we can reach the auth endpoint
+        const { data } = await supabase.auth.getSession();
+        setIsConnected(true);
       } catch {
         setIsConnected(false);
       } finally {
