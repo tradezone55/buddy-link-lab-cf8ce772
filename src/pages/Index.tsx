@@ -108,11 +108,11 @@ const Index = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-effect">
-              Start Learning
+            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-effect" onClick={() => window.location.href = '/auth'}>
+              Get Started
             </Button>
-            <Button size="lg" variant="outline" className="border-border hover:bg-secondary">
-              View Demo
+            <Button size="lg" variant="outline" className="border-border hover:bg-secondary" onClick={() => window.location.href = '/auth'}>
+              Sign In
             </Button>
           </div>
         </section>
