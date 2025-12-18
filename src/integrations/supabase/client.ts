@@ -1,15 +1,6 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL = "https://fvrkelbvfwwuihbppvw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2cmtlbGJ2Znd3dWloYnBwdnciLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNDU2MDM0MSwiZXhwIjoyMDUwMTM2MzQxfQ.s-S2dNNxbNlXGqHfPJRrB6KiH6TqPRVyO0z9w-2_zGQ";
 
-export const isSupabaseConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
-
-if (!isSupabaseConfigured) {
-  console.warn('Supabase credentials not configured. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your environment.');
-}
-
-// Only create the client if credentials are available
-export const supabase: SupabaseClient | null = isSupabaseConfigured
-  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null;
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
