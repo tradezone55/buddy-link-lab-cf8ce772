@@ -15,7 +15,8 @@ const Dashboard = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  // Don't render protected UI until auth is confirmed - prevents flash of protected content
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-primary animate-pulse">Loading...</div>
