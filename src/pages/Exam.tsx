@@ -165,10 +165,13 @@ const Exam = () => {
         });
 
         if (error) {
-          console.error('Failed to save exam attempt:', error);
+          // Only log detailed errors in development to prevent information leakage
+          if (import.meta.env.DEV) {
+            console.error('Failed to save exam attempt:', error);
+          }
           toast({
             title: 'Warning',
-            description: 'Exam completed but results could not be saved to the database.',
+            description: 'Exam completed but results could not be saved.',
             variant: 'destructive'
           });
         }
@@ -183,7 +186,10 @@ const Exam = () => {
         } 
       });
     } catch (error) {
-      console.error('Error submitting exam:', error);
+      // Only log detailed errors in development to prevent information leakage
+      if (import.meta.env.DEV) {
+        console.error('Error submitting exam:', error);
+      }
       toast({
         title: 'Error',
         description: 'Failed to submit exam. Please try again.',
@@ -194,7 +200,8 @@ const Exam = () => {
     }
   };
 
-  if (loading) {
+  // Don't render protected UI until auth is confirmed - prevents flash of protected content
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-primary animate-pulse">Loading...</div>
