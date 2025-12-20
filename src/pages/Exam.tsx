@@ -150,7 +150,9 @@ const Exam = () => {
       
       if (user) {
         // Save to database with all exam data
-        // Using type assertion as the types are regenerated after migration
+        console.log('Attempting to save exam results for user:', user.id);
+        
+        // Use JSON.parse(JSON.stringify()) to ensure clean JSON types for JSONB columns
         const attemptData = {
           user_id: user.id,
           student_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown',
@@ -161,27 +163,36 @@ const Exam = () => {
           total_questions: results.totalQuestions,
           duration_minutes: results.durationMinutes,
           attempt_date: new Date().toISOString(),
-          domains: results.domainScores,
-          missed_questions: results.missedQuestions,
-          // New columns for enhanced tracking
+          domains: JSON.parse(JSON.stringify(results.domainScores)),
+          missed_questions: JSON.parse(JSON.stringify(results.missedQuestions)),
           correct_answers: results.correctCount,
           time_taken_seconds: elapsedTime,
-          answers: userAnswers,
-          domain_breakdown: results.domainScores,
+          answers: JSON.parse(JSON.stringify(userAnswers)),
+          domain_breakdown: JSON.parse(JSON.stringify(results.domainScores)),
           completed_at: new Date().toISOString()
         };
         
-        const { error } = await supabase.from('exam_attempts').insert(attemptData as never);
+        console.log('Attempt data:', attemptData);
+        
+        const { data, error } = await supabase
+          .from('exam_attempts')
+          .insert([attemptData])
+          .select();
+
+        console.log('Insert result - data:', data, 'error:', error);
 
         if (error) {
-          // Only log detailed errors in development to prevent information leakage
-          if (import.meta.env.DEV) {
-            console.error('Failed to save exam attempt:', error);
-          }
+          console.error('Failed to save exam attempt:', error);
           toast({
             title: 'Warning',
-            description: 'Exam completed but results could not be saved.',
+            description: `Exam completed but results could not be saved: ${error.message}`,
             variant: 'destructive'
+          });
+        } else {
+          console.log('Exam attempt saved successfully:', data);
+          toast({
+            title: 'Success',
+            description: 'Exam results saved!',
           });
         }
       }
