@@ -149,8 +149,9 @@ const Exam = () => {
       const results = calculateResults();
       
       if (user) {
-        // Save to database
-        const { error } = await supabase.from('exam_attempts').insert({
+        // Save to database with all exam data
+        // Using type assertion as the types are regenerated after migration
+        const attemptData = {
           user_id: user.id,
           student_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown',
           student_email: user.email || '',
@@ -161,8 +162,16 @@ const Exam = () => {
           duration_minutes: results.durationMinutes,
           attempt_date: new Date().toISOString(),
           domains: results.domainScores,
-          missed_questions: results.missedQuestions
-        });
+          missed_questions: results.missedQuestions,
+          // New columns for enhanced tracking
+          correct_answers: results.correctCount,
+          time_taken_seconds: elapsedTime,
+          answers: userAnswers,
+          domain_breakdown: results.domainScores,
+          completed_at: new Date().toISOString()
+        };
+        
+        const { error } = await supabase.from('exam_attempts').insert(attemptData as never);
 
         if (error) {
           // Only log detailed errors in development to prevent information leakage

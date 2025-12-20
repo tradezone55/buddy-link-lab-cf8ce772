@@ -16,8 +16,12 @@ export type Database = {
     Tables: {
       exam_attempts: {
         Row: {
+          answers: Json | null
           attempt_date: string
+          completed_at: string | null
+          correct_answers: number | null
           created_at: string
+          domain_breakdown: Json | null
           domains: Json | null
           duration_minutes: number
           exam_name: string
@@ -27,12 +31,17 @@ export type Database = {
           score: number
           student_email: string
           student_name: string
+          time_taken_seconds: number | null
           total_questions: number
-          user_id: string | null
+          user_id: string
         }
         Insert: {
+          answers?: Json | null
           attempt_date?: string
+          completed_at?: string | null
+          correct_answers?: number | null
           created_at?: string
+          domain_breakdown?: Json | null
           domains?: Json | null
           duration_minutes: number
           exam_name: string
@@ -42,12 +51,17 @@ export type Database = {
           score: number
           student_email: string
           student_name: string
+          time_taken_seconds?: number | null
           total_questions: number
-          user_id?: string | null
+          user_id: string
         }
         Update: {
+          answers?: Json | null
           attempt_date?: string
+          completed_at?: string | null
+          correct_answers?: number | null
           created_at?: string
+          domain_breakdown?: Json | null
           domains?: Json | null
           duration_minutes?: number
           exam_name?: string
@@ -57,8 +71,30 @@ export type Database = {
           score?: number
           student_email?: string
           student_name?: string
+          time_taken_seconds?: number | null
           total_questions?: number
-          user_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -67,10 +103,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "faculty" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -197,6 +239,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "faculty", "student"],
+    },
   },
 } as const
