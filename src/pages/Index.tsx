@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Network, Database, BookOpen, Trophy, Zap, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NetworkNode } from "@/components/NetworkNode";
@@ -9,8 +10,19 @@ import { supabase } from "@/integrations/supabase/client";
 const Index = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [checking, setChecking] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Check for password reset token in URL and redirect to auth
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const type = hashParams.get('type');
+    
+    if (accessToken && type === 'recovery') {
+      navigate('/auth' + window.location.hash);
+      return;
+    }
+
     const checkConnection = async () => {
       try {
         // Just check if we can reach the auth endpoint
@@ -24,7 +36,7 @@ const Index = () => {
     };
 
     checkConnection();
-  }, []);
+  }, [navigate]);
 
   const features = [
     {

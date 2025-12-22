@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Network, Mail, Lock, User, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { NetworkNode } from '@/components/NetworkNode';
+import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -22,7 +23,15 @@ const signupSchema = loginSchema.extend({
   path: ['confirmPassword'],
 });
 
-type AuthMode = 'login' | 'signup' | 'forgot';
+const resetPasswordSchema = z.object({
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword'],
+});
+
+type AuthMode = 'login' | 'signup' | 'forgot' | 'reset';
 
 const Auth = () => {
   const [mode, setMode] = useState<AuthMode>('login');
@@ -35,14 +44,26 @@ const Auth = () => {
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; name?: string }>({});
   
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { signIn, signUp, user, resetPassword } = useAuth();
 
+  // Check for password reset token in URL
   useEffect(() => {
-    if (user) {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const type = hashParams.get('type');
+    
+    if (accessToken && type === 'recovery') {
+      setMode('reset');
+    }
+  }, [location]);
+
+  useEffect(() => {
+    if (user && mode !== 'reset') {
       navigate('/dashboard');
     }
-  }, [user, navigate]);
+  }, [user, navigate, mode]);
 
   const validateForm = () => {
     setErrors({});
@@ -52,6 +73,8 @@ const Auth = () => {
         z.object({ email: z.string().trim().email('Invalid email address') }).parse({ email });
       } else if (mode === 'login') {
         loginSchema.parse({ email, password });
+      } else if (mode === 'reset') {
+        resetPasswordSchema.parse({ password, confirmPassword });
       } else {
         signupSchema.parse({ email, password, confirmPassword, name });
       }
@@ -78,7 +101,22 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      if (mode === 'forgot') {
+      if (mode === 'reset') {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) {
+          toast({
+            title: 'Password update failed',
+            description: error.message,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Password updated!',
+            description: 'Your password has been successfully reset.',
+          });
+          navigate('/dashboard');
+        }
+      } else if (mode === 'forgot') {
         const { error } = await resetPassword(email);
         if (error) {
           toast({
@@ -151,11 +189,13 @@ const Auth = () => {
           </div>
           <h1 className="text-2xl font-bold text-foreground">Network+ Exam Prep</h1>
           <p className="text-muted-foreground mt-2">
-            {mode === 'forgot' 
-              ? 'Enter your email to reset your password'
-              : mode === 'login' 
-                ? 'Sign in to continue your practice' 
-                : 'Create an account to start practicing'}
+            {mode === 'reset'
+              ? 'Enter your new password'
+              : mode === 'forgot' 
+                ? 'Enter your email to reset your password'
+                : mode === 'login' 
+                  ? 'Sign in to continue your practice' 
+                  : 'Create an account to start practicing'}
           </p>
         </div>
 
@@ -180,25 +220,27 @@ const Auth = () => {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 bg-background/50 border-border focus:border-primary"
-                />
-              </div>
-              {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-            </div>
-
-            {mode !== 'forgot' && (
+            {mode !== 'reset' && (
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10 bg-background/50 border-border focus:border-primary"
+                  />
+                </div>
+                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+              </div>
+            )}
+
+            {(mode !== 'forgot') && (
+              <div className="space-y-2">
+                <Label htmlFor="password">{mode === 'reset' ? 'New Password' : 'Password'}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -221,7 +263,7 @@ const Auth = () => {
               </div>
             )}
 
-            {mode === 'signup' && (
+            {(mode === 'signup' || mode === 'reset') && (
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <div className="relative">
@@ -263,7 +305,7 @@ const Auth = () => {
                 'Please wait...'
               ) : (
                 <>
-                  {mode === 'forgot' ? 'Send Reset Link' : mode === 'login' ? 'Sign In' : 'Create Account'}
+                  {mode === 'reset' ? 'Update Password' : mode === 'forgot' ? 'Send Reset Link' : mode === 'login' ? 'Sign In' : 'Create Account'}
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </>
               )}
@@ -271,7 +313,7 @@ const Auth = () => {
           </form>
 
           <div className="mt-6 text-center space-y-2">
-            {mode === 'forgot' ? (
+            {mode === 'reset' ? null : mode === 'forgot' ? (
               <button
                 type="button"
                 onClick={() => {
